@@ -1,0 +1,37 @@
+{# _liste_satirlar.html — tablo gövdesi, HTMX ile arama/filtreleme için ayrı partial #}
+{% if satirlar %}
+  {% for kayit in satirlar %}
+  <tr>
+    {% for kolon in liste_view.kolonlar %}
+    <td>
+      {%- set deger = kayit | attr(kolon.ad) if kolon.ad else '' -%}
+      {% if kolon.badge %}
+        <span class="badge badge-{{ deger }}">{{ deger }}</span>
+      {% elif kolon.para_birimi %}
+        <span class="tutar-col">{{ '%.2f'|format(deger|float) }} ₺</span>
+      {% elif kolon.tarih and deger %}
+        {{ deger.strftime('%d.%m.%Y') }}
+      {% elif kolon.renderer %}
+        {{ kolon.renderer(kayit) }}
+      {% else %}
+        {{ deger or '—' }}
+      {% endif %}
+    </td>
+    {% endfor %}
+    <td class="text-end">
+      {% block satir_aksiyonlar scoped %}
+      <a href="{{ detay_url(kayit) }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-eye"></i>
+      </a>
+      {% endblock %}
+    </td>
+  </tr>
+  {% endfor %}
+{% else %}
+  <tr>
+    <td colspan="{{ liste_view.kolonlar|length + 1 }}" class="text-center text-muted py-5">
+      <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+      Kayıt bulunamadı
+    </td>
+  </tr>
+{% endif %}

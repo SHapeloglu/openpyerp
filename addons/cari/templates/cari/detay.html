@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}{{ cari.unvan }}{% endblock %}
+
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-0 fw-bold">{{ cari.unvan }}</h5>
+    <span class="text-muted small">{{ cari.kod }} · {{ cari.tip }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('cari.cari_form', cari_id=cari.id) }}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil me-1"></i>Düzenle
+    </a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Bilgiler -->
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header py-2">Cari Bilgileri</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          {% if cari.vergi_no %}
+          <tr><td class="text-muted small ps-3">Vergi No</td>
+              <td class="small pe-3">{{ cari.vergi_no }}</td></tr>
+          {% endif %}
+          {% if cari.vergi_dairesi %}
+          <tr><td class="text-muted small ps-3">Vergi Dairesi</td>
+              <td class="small pe-3">{{ cari.vergi_dairesi }}</td></tr>
+          {% endif %}
+          {% if cari.telefon %}
+          <tr><td class="text-muted small ps-3">Telefon</td>
+              <td class="small pe-3">{{ cari.telefon }}</td></tr>
+          {% endif %}
+          {% if cari.email %}
+          <tr><td class="text-muted small ps-3">E-posta</td>
+              <td class="small pe-3">{{ cari.email }}</td></tr>
+          {% endif %}
+          {% if cari.sehir %}
+          <tr><td class="text-muted small ps-3">Şehir</td>
+              <td class="small pe-3">{{ cari.sehir }}</td></tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <!-- Bakiye -->
+    <div class="card mt-3">
+      <div class="card-body text-center py-4">
+        <div class="text-muted small mb-1">Güncel Bakiye</div>
+        <div class="fs-3 fw-bold {{ 'text-danger' if bakiye > 0 else 'text-success' if bakiye < 0 else '' }}">
+          {{ '%.2f'|format(bakiye|float) }} ₺
+        </div>
+        <div class="text-muted small mt-1">
+          {{ 'Borçlu' if bakiye > 0 else 'Alacaklı' if bakiye < 0 else 'Bakiye Sıfır' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hareketler -->
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header py-2">Son Hareketler</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Tarih</th><th>Belge No</th><th>Açıklama</th>
+              <th class="text-end">Borç</th><th class="text-end">Alacak</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hareketler %}
+            <tr>
+              <td class="small">{{ h.tarih.strftime('%d.%m.%Y') }}</td>
+              <td class="small">{{ h.belge_no or '—' }}</td>
+              <td class="small">{{ h.aciklama or '—' }}</td>
+              <td class="text-end small">
+                {% if h.hareket_tipi == 'BORC' %}
+                <span class="text-danger">{{ '%.2f'|format(h.tutar|float) }} ₺</span>
+                {% else %}—{% endif %}
+              </td>
+              <td class="text-end small">
+                {% if h.hareket_tipi == 'ALACAK' %}
+                <span class="text-success">{{ '%.2f'|format(h.tutar|float) }} ₺</span>
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Hareket yok</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

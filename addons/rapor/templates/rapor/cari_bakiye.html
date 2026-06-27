@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}Cari Bakiye Raporu{% endblock %}
+
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="fw-bold mb-0">Cari Bakiye Raporu</h5>
+  <a href="{{ url_for('rapor.rapor_ana') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Raporlar
+  </a>
+</div>
+
+<!-- Filtreler -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-center">
+      <div class="col-auto">
+        <select name="tip" class="form-select form-select-sm">
+          <option value="">Tüm Tipler</option>
+          <option value="ALICI"    {{ 'selected' if tip == 'ALICI' }}>Alıcı</option>
+          <option value="SATICI"   {{ 'selected' if tip == 'SATICI' }}>Satıcı</option>
+          <option value="HER_IKISI"{{ 'selected' if tip == 'HER_IKISI' }}>Her İkisi</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <div class="form-check form-check-inline mb-0">
+          <input type="checkbox" name="sadece_bakiyeli" value="1" id="sb"
+                 class="form-check-input"
+                 {{ 'checked' if sadece_bakiyeli }}>
+          <label for="sb" class="form-check-label small">Sadece bakiyeli</label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-filter me-1"></i>Filtrele
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Özet -->
+{% set toplam_borc    = namespace(v=0) %}
+{% set toplam_alacak  = namespace(v=0) %}
+{% for c in cariler %}
+  {% set bak = bakiyeler.get(c.id, 0) %}
+  {% if bak > 0 %}{% set toplam_borc.v    = toplam_borc.v    + bak %}{% endif %}
+  {% if bak < 0 %}{% set toplam_alacak.v  = toplam_alacak.v  + bak %}{% endif %}
+{% endfor %}
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1">Toplam Alacak (Borcumuz)</div>
+      <div class="fs-4 fw-bold text-danger">{{ '%.2f'|format(toplam_borc.v) }} ₺</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1">Toplam Borç (Alacağımız)</div>
+      <div class="fs-4 fw-bold text-success">{{ '%.2f'|format(toplam_alacak.v | abs) }} ₺</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1">Cari Sayısı</div>
+      <div class="fs-4 fw-bold">{{ cariler|length }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tablo -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Kod</th>
+          <th>Cari Adı</th>
+          <th>Tip</th>
+          <th class="text-end">Borç</th>
+          <th class="text-end">Alacak</th>
+          <th class="text-end">Bakiye</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cari in cariler %}
+        {% set bakiye = bakiyeler.get(cari.id, 0) %}
+        <tr>
+          <td class="small text-muted">{{ cari.kod }}</td>
+          <td class="small fw-semibold">{{ cari.unvan }}</td>
+          <td class="small">{{ cari.tip }}</td>
+          <td class="text-end small">
+            {% if bakiye > 0 %}
+            <span class="text-danger">{{ '%.2f'|format(bakiye) }} ₺</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end small">
+            {% if bakiye < 0 %}
+            <span class="text-success">{{ '%.2f'|format(bakiye|abs) }} ₺</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-end small fw-semibold {{ 'text-danger' if bakiye > 0 else 'text-success' if bakiye < 0 else 'text-muted' }}">
+            {{ '%.2f'|format(bakiye) }} ₺
+          </td>
+          <td>
+            <a href="{{ url_for('cari.cari_detay', cari_id=cari.id) }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>Kayıt bulunamadı
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

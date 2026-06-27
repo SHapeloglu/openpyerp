@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}Stok Durumu{% endblock %}
+
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="fw-bold mb-0">Stok Durumu</h5>
+  <a href="{{ url_for('rapor.rapor_ana') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Raporlar
+  </a>
+</div>
+
+<!-- Min stok uyarısı -->
+{% if uyari_listesi %}
+<div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <span>
+    <strong>{{ uyari_listesi|length }} ürün</strong> minimum stok seviyesinin altında:
+    {% for s in uyari_listesi[:5] %}
+      <strong>{{ s.ad }}</strong>{% if not loop.last %}, {% endif %}
+    {% endfor %}
+    {% if uyari_listesi|length > 5 %}ve {{ uyari_listesi|length - 5 }} diğeri{% endif %}
+  </span>
+</div>
+{% endif %}
+
+<!-- Özet -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1">Toplam Malzeme Kartı</div>
+      <div class="fs-4 fw-bold">{{ stoklar|length }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1 text-danger">Min Stok Altı</div>
+      <div class="fs-4 fw-bold text-danger">{{ uyari_listesi|length }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1 text-success">Yeterli Stok</div>
+      <div class="fs-4 fw-bold text-success">{{ stoklar|length - uyari_listesi|length }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tablo -->
+<div class="card">
+  <div class="card-header py-2 d-flex justify-content-between align-items-center">
+    <span>Stok Listesi</span>
+    <input type="text" class="form-control form-control-sm w-auto"
+           placeholder="Ara..." id="stok-ara"
+           oninput="araStok(this.value)">
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" id="stok-tablo">
+      <thead class="table-light">
+        <tr>
+          <th>Kod</th>
+          <th>Stok Adı</th>
+          <th>Birim</th>
+          <th class="text-end">Mevcut</th>
+          <th class="text-end">Min. Stok</th>
+          <th>Durum</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stok in stoklar %}
+        {% set miktar = miktarlar.get(stok.id, 0) %}
+        {% set uyari  = stok.min_stok and miktar < stok.min_stok|float %}
+        <tr class="stok-satir {{ 'table-danger bg-danger bg-opacity-10' if uyari }}">
+          <td class="small text-muted">{{ stok.kod }}</td>
+          <td class="small fw-semibold">{{ stok.ad }}</td>
+          <td class="small">{{ stok.birim.kod if stok.birim else '—' }}</td>
+          <td class="text-end small {{ 'text-danger fw-bold' if uyari else '' }}">
+            {{ '%.4f'|format(miktar) }}
+          </td>
+          <td class="text-end small text-muted">
+            {{ '%.4f'|format(stok.min_stok|float) if stok.min_stok else '—' }}
+          </td>
+          <td>
+            {% if uyari %}
+            <span class="badge bg-danger">Kritik</span>
+            {% elif stok.min_stok and miktar < stok.min_stok|float * 1.5 %}
+            <span class="badge bg-warning text-dark">Azalıyor</span>
+            {% else %}
+            <span class="badge bg-success">Normal</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('stok.stok_detay', stok_id=stok.id) }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>Stok kartı bulunamadı
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function araStok(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.stok-satir').forEach(function(tr) {
+    const metin = tr.textContent.toLowerCase();
+    tr.style.display = metin.includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

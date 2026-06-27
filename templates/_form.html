@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}{{ form_view.baslik }}{% endblock %}
+
+{% block ekstra_css %}
+<style>
+.alan-group { margin-bottom: 1rem; }
+.satir-tablo th { font-size: .75rem; font-weight: 600; color: #6c7293;
+                  text-transform: uppercase; padding: 6px 8px; white-space: nowrap; }
+.satir-tablo td { padding: 3px 4px; vertical-align: middle; }
+.satir-tablo input, .satir-tablo select {
+  font-size: .82rem; padding: 3px 6px; height: 30px; border-radius: 4px; }
+.tutar-col { text-align: right; font-variant-numeric: tabular-nums; }
+.toplam-satir td { font-weight: 600; background: #f8f9ff; }
+</style>
+{% endblock %}
+
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0 small">
+        {% block breadcrumb %}{% endblock %}
+        <li class="breadcrumb-item active">{{ form_view.baslik }}</li>
+      </ol>
+    </nav>
+  </div>
+  {% if nesne and nesne.id %}
+  <div class="d-flex gap-2">
+    {% block detay_butonlar %}{% endblock %}
+  </div>
+  {% endif %}
+</div>
+
+<form method="POST" id="ana-form"
+      action="{{ form_action }}"
+      hx-boost="false">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% block gizli_alanlar %}{% endblock %}
+
+  <div class="row g-3">
+
+    <!-- ── Sol: form alanları ── -->
+    <div class="{{ 'col-lg-8' if form_view.cok_satirli else 'col-12' }}">
+      <div class="card">
+        <div class="card-header py-2">
+          <span>{{ form_view.baslik }}</span>
+          {% if nesne and nesne.durum is defined %}
+          <span class="badge ms-2 badge-{{ nesne.durum }}">{{ nesne.durum }}</span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for alan in form_view.alanlar %}
+            {% if alan.tip != 'hidden' %}
+            <div class="col-md-{{ alan.genislik }} alan-group">
+              <label class="form-label fw-semibold small mb-1">
+                {{ alan.etiket }}
+                {% if alan.zorunlu %}<span class="text-danger">*</span>{% endif %}
+              </label>
+
+              {%- set deger = (nesne | attr(alan.ad)) if nesne and (nesne | attr(alan.ad)) is not none else alan.varsayilan or '' -%}
+
+              {% if alan.readonly %}
+                <div class="form-control-plaintext fw-semibold">{{ deger or '—' }}</div>
+                <input type="hidden" name="{{ alan.ad }}" value="{{ deger }}">
+
+              {% elif alan.tip == 'select' %}
+                <select name="{{ alan.ad }}"
+                        class="form-select form-select-sm"
+                        {{ 'required' if alan.zorunlu }}
+                        {{ 'disabled' if alan.readonly }}>
+                  <option value="">— Seçin —</option>
+                  {% set secenekler = alan.secenekler() if alan.secenekler is callable else alan.secenekler %}
+                  {% for s_deger, s_etiket in (secenekler or []) %}
+                  <option value="{{ s_deger }}"
+                          {{ 'selected' if deger|string == s_deger|string }}>
+                    {{ s_etiket }}
+                  </option>
+                  {% endfor %}
+                </select>
+
+              {% elif alan.tip == 'textarea' %}
+                <textarea name="{{ alan.ad }}" class="form-control form-control-sm"
+                          rows="3" placeholder="{{ alan.placeholder }}"
+                          {{ 'required' if alan.zorunlu }}>{{ deger }}</textarea>
+
+              {% elif alan.tip == 'date' %}
+                <input type="date" name="{{ alan.ad }}" class="form-control form-control-sm"
+                       value="{{ deger.isoformat() if deger and deger != '' else '' }}"
+                       {{ 'required' if alan.zorunlu }}>
+
+              {% elif alan.tip in ('money', 'number') %}
+                <input type="number" name="{{ alan.ad }}" class="form-control form-control-sm text-end"
+                       value="{{ deger }}" step="{{ alan.adim }}" min="0"
+                       placeholder="{{ alan.placeholder }}"
+                       {{ 'required' if alan.zorunlu }}>
+
+              {% else %}
+                <input type="text" name="{{ alan.ad }}" class="form-control form-control-sm"
+                       value="{{ deger }}" placeholder="{{ alan.placeholder }}"
+                       {{ 'required' if alan.zorunlu }}>
+              {% endif %}
+
+              {% if alan.yardim %}
+              <div class="form-text text-muted">{{ alan.yardim }}</div>
+              {% endif %}
+            </div>
+            {% else %}
+            <input type="hidden" name="{{ alan.ad }}"
+                   value="{{ (nesne | attr(alan.ad)) if nesne else alan.varsayilan or '' }}">
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Satır tablosu (belge formu) ── -->
+      {% if form_view.cok_satirli %}
+      <div class="card mt-3">
+        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+          <span>Kalemler</span>
+          <button type="button" class="btn btn-outline-primary btn-sm"
+                  hx-get="{{ url_for('belge.satir_ekle_partial') }}"
+                  hx-target="#satirlar-govde"
+                  hx-swap="beforeend"
+                  hx-vals='{"sira": "{{ satirlar|length + 1 if satirlar else 1 }}"}'>
+            <i class="bi bi-plus me-1"></i>Satır Ekle
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table satir-tablo mb-0">
+            <thead class="table-light">
+              <tr>
+                {% for kolon in form_view.satir_alanlari %}
+                <th style="width:{{ kolon.genislik }}">{{ kolon.etiket }}</th>
+                {% endfor %}
+                <th style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody id="satirlar-govde">
+              {% if nesne and nesne.satirlar %}
+                {% for satir in nesne.satirlar %}
+                {% include '_satir_satiri.html' %}
+                {% endfor %}
+              {% else %}
+                {# İlk boş satır #}
+                {% set satir = none %}
+                {% set sira = 1 %}
+                {% include '_satir_satiri.html' %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── Sağ: özet / toplam ── -->
+    {% if form_view.cok_satirli %}
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header py-2">Özet</div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <tbody>
+              <tr>
+                <td class="text-muted small ps-3">KDV Hariç</td>
+                <td class="text-end pe-3 tutar-col" id="ozet-kdvsiz">
+                  {{ '%.2f'|format(nesne.toplam_kdvsiz|float) if nesne and nesne.toplam_kdvsiz else '0.00' }} ₺
+                </td>
+              </tr>
+              <tr>
+                <td class="text-muted small ps-3">KDV</td>
+                <td class="text-end pe-3 tutar-col" id="ozet-kdv">
+                  {{ '%.2f'|format(nesne.toplam_kdv|float) if nesne and nesne.toplam_kdv else '0.00' }} ₺
+                </td>
+              </tr>
+              <tr class="toplam-satir">
+                <td class="ps-3">Toplam</td>
+                <td class="text-end pe-3 tutar-col fw-bold" id="ozet-toplam">
+                  {{ '%.2f'|format(nesne.toplam_kdvli|float) if nesne and nesne.toplam_kdvli else '0.00' }} ₺
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Workflow butonları -->
+      {% if nesne and nesne.id %}
+      {% set gecisler = nesne.mevcut_gecisler() %}
+      {% if gecisler %}
+      <div class="card mt-3">
+        <div class="card-header py-2">İşlemler</div>
+        <div class="card-body d-grid gap-2">
+          {% for gecis in gecisler %}
+          <form method="POST"
+                action="{{ url_for('belge.belge_durum_gecis', baslik_id=nesne.id, hedef_durum=gecis.hedef) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                    class="btn w-100 btn-sm {{ 'btn-success' if gecis.hedef == 'ONAYLANDI' else 'btn-danger' if gecis.hedef == 'IPTAL' else 'btn-outline-secondary' }}"
+                    onclick="return confirm('{{ gecis.isim }} işlemini onaylıyor musunuz?')">
+              <i class="bi bi-{{ 'check-circle' if gecis.hedef == 'ONAYLANDI' else 'x-circle' if gecis.hedef == 'IPTAL' else 'arrow-right-circle' }} me-1"></i>
+              {{ gecis.isim }}
+            </button>
+          </form>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div><!-- /row -->
+
+  <!-- Alt butonlar -->
+  <div class="mt-3 d-flex gap-2">
+    {% if nesne and nesne.id and nesne.durum is defined and nesne.durum in ('TASLAK', 'ACIK') %}
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check2 me-1"></i>{{ form_view.submit_etiket }}
+    </button>
+    {% elif not (nesne and nesne.id) %}
+    <button type="submit" class="btn btn-primary">
+      <i class="bi bi-check2 me-1"></i>{{ form_view.submit_etiket }}
+    </button>
+    {% endif %}
+    <a href="{{ form_view.iptal_url or request.referrer or '/' }}"
+       class="btn btn-outline-secondary">
+      <i class="bi bi-x me-1"></i>Vazgeç
+    </a>
+    {% if nesne and nesne.id %}
+    <div class="ms-auto d-flex gap-2">
+      <form method="POST" action="{{ url_for('belge.belge_cogalt_view', baslik_id=nesne.id) }}" style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                onclick="return confirm('Belge kopyalansın mı?')">
+          <i class="bi bi-copy me-1"></i>Kopyala
+        </button>
+      </form>
+      {% if nesne and nesne.id %}
+      <form method="POST"
+            action="{{ sil_url if sil_url is defined and sil_url else url_for('belge.belge_sil', baslik_id=nesne.id) }}"
+            style="display:inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-danger btn-sm"
+                onclick="return confirm('Silinsin mi? Bu işlem geri alinamaz.')">
+          <i class="bi bi-trash me-1"></i>Sil
+        </button>
+      </form>
+      {% endif %}
+    {% endif %}
+  </div>
+
+</form>
+{% endblock %}
+
+{% block ekstra_js %}
+<script>
+// Satır silme
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.satir-sil-btn')) {
+    e.target.closest('tr').remove();
+    toplamHesapla();
+  }
+});
+
+// Anlık toplam hesaplama
+function toplamHesapla() {
+  let kdvsiz = 0, kdv = 0, kdvli = 0;
+  document.querySelectorAll('.satir-row').forEach(function(tr) {
+    const miktar   = parseFloat(tr.querySelector('.s-miktar')?.value) || 0;
+    const fiyat    = parseFloat(tr.querySelector('.s-fiyat')?.value) || 0;
+    const iskonto  = parseFloat(tr.querySelector('.s-iskonto')?.value) || 0;
+    const kdvOran  = parseFloat(tr.querySelector('.s-kdv')?.value) || 0;
+    const brut     = miktar * fiyat;
+    const kd       = brut * (1 - iskonto / 100);
+    const kdvT     = kd * kdvOran / 100;
+    kdvsiz += kd; kdv += kdvT; kdvli += kd + kdvT;
+
+    // Satır toplamını güncelle
+    const toplamEl = tr.querySelector('.s-toplam');
+    if (toplamEl) toplamEl.textContent = (kd + kdvT).toFixed(2) + ' ₺';
+  });
+  const fmt = v => v.toFixed(2) + ' ₺';
+  const el = id => document.getElementById(id);
+  if (el('ozet-kdvsiz')) el('ozet-kdvsiz').textContent = fmt(kdvsiz);
+  if (el('ozet-kdv'))    el('ozet-kdv').textContent    = fmt(kdv);
+  if (el('ozet-toplam')) el('ozet-toplam').textContent = fmt(kdvli);
+}
+
+// Satır değişince hesapla
+document.addEventListener('input', function(e) {
+  if (e.target.closest('.satir-row')) toplamHesapla();
+});
+
+// HTMX satır eklendi → tekrar bağla
+document.addEventListener('htmx:afterSwap', function() {
+  toplamHesapla();
+});
+</script>
+{% endblock %}

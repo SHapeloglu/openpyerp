@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}Raporlar{% endblock %}
+
+{% block icerik %}
+<h5 class="fw-bold mb-4">Raporlar</h5>
+
+<div class="row g-3">
+
+  <div class="col-md-6 col-xl-3">
+    <a href="{{ url_for('rapor.gelir_gider') }}" class="text-decoration-none">
+      <div class="card h-100 card-hover">
+        <div class="card-body d-flex align-items-center gap-3 py-4">
+          <div class="rounded-3 p-3" style="background:#e7f3ff">
+            <i class="bi bi-bar-chart-line fs-3 text-primary"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">Gelir / Gider</div>
+            <div class="text-muted small">Satış ve alış fatura özeti</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-md-6 col-xl-3">
+    <a href="{{ url_for('rapor.cari_bakiye') }}" class="text-decoration-none">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-4">
+          <div class="rounded-3 p-3" style="background:#d1e7dd">
+            <i class="bi bi-people fs-3 text-success"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">Cari Bakiyeler</div>
+            <div class="text-muted small">Borç / alacak özeti</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-md-6 col-xl-3">
+    <a href="{{ url_for('rapor.vade_analizi') }}" class="text-decoration-none">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-4">
+          <div class="rounded-3 p-3" style="background:#fff3cd">
+            <i class="bi bi-calendar-event fs-3 text-warning"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">Vade Analizi</div>
+            <div class="text-muted small">Geciken ve yaklaşan vadeler</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-md-6 col-xl-3">
+    <a href="{{ url_for('rapor.stok_durumu') }}" class="text-decoration-none">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-4">
+          <div class="rounded-3 p-3" style="background:#f8d7da">
+            <i class="bi bi-box-seam fs-3 text-danger"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">Stok Durumu</div>
+            <div class="text-muted small">Mevcut miktar ve uyarılar</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+</div>
+
+<style>
+.card-hover { transition: box-shadow .15s; }
+.card-hover:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1) !important; }
+</style>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}Gelir / Gider Raporu{% endblock %}
+
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="fw-bold mb-0">Gelir / Gider Raporu</h5>
+  <a href="{{ url_for('rapor.rapor_ana') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Raporlar
+  </a>
+</div>
+
+<!-- Tarih filtresi -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-center">
+      <div class="col-auto">
+        <label class="form-label small mb-0 fw-semibold">Başlangıç</label>
+        <input type="date" name="baslangic" class="form-control form-control-sm"
+               value="{{ baslangic.isoformat() }}">
+      </div>
+      <div class="col-auto">
+        <label class="form-label small mb-0 fw-semibold">Bitiş</label>
+        <input type="date" name="bitis" class="form-control form-control-sm"
+               value="{{ bitis.isoformat() }}">
+      </div>
+      <div class="col-auto mt-3">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-filter me-1"></i>Filtrele
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Özet kartlar -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1">Toplam Satış</div>
+      <div class="fs-3 fw-bold text-success">{{ '%.2f'|format(satis) }} ₺</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1">Toplam Alış</div>
+      <div class="fs-3 fw-bold text-danger">{{ '%.2f'|format(alis) }} ₺</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card text-center py-3">
+      <div class="text-muted small mb-1">Net Kar</div>
+      <div class="fs-3 fw-bold {{ 'text-success' if kar >= 0 else 'text-danger' }}">
+        {{ '%.2f'|format(kar) }} ₺
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Aylık detay -->
+<div class="card">
+  <div class="card-header py-2">Aylık Döküm</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Dönem</th>
+          <th class="text-end">Satış</th>
+          <th class="text-end">Alış</th>
+          <th class="text-end">Net</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set aylik_dict = {} %}
+        {% for kayit in aylik %}
+          {% set anahtar = '%d-%02d'|format(kayit.yil, kayit.ay) %}
+          {% if anahtar not in aylik_dict %}
+            {% set _ = aylik_dict.update({anahtar: {'satis': 0, 'alis': 0}}) %}
+          {% endif %}
+          {% if kayit.cari_tip == 'SATIS' %}
+            {% set _ = aylik_dict[anahtar].update({'satis': kayit.toplam|float}) %}
+          {% else %}
+            {% set _ = aylik_dict[anahtar].update({'alis': kayit.toplam|float}) %}
+          {% endif %}
+        {% endfor %}
+
+        {% for donem, deger in aylik_dict.items() | sort %}
+        {% set net = deger.satis - deger.alis %}
+        <tr>
+          <td class="small fw-semibold">{{ donem }}</td>
+          <td class="text-end small text-success">{{ '%.2f'|format(deger.satis) }} ₺</td>
+          <td class="text-end small text-danger">{{ '%.2f'|format(deger.alis) }} ₺</td>
+          <td class="text-end small fw-semibold {{ 'text-success' if net >= 0 else 'text-danger' }}">
+            {{ '%.2f'|format(net) }} ₺
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            Seçili dönemde veri bulunamadı
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}{{ banka.banka_adi }}{% endblock %}
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-0 fw-bold">{{ banka.banka_adi }}</h5>
+    <span class="text-muted small">{{ banka.sube_adi or '' }} · {{ banka.para_birimi }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('finans.banka_hareket_form', banka_id=banka.id) }}"
+       class="btn btn-primary btn-sm">
+      <i class="bi bi-plus me-1"></i>Hareket Ekle
+    </a>
+    <a href="{{ url_for('finans.banka_form', banka_id=banka.id) }}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-pencil me-1"></i>Düzenle
+    </a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card p-3">
+      <div class="text-muted small">IBAN</div>
+      <div class="small fw-semibold">{{ banka.iban or '—' }}</div>
+      <hr class="my-2">
+      <div class="text-muted small">Bakiye</div>
+      <div class="fs-4 fw-bold {{ 'text-success' if bakiye >= 0 else 'text-danger' }}">
+        {{ '%.2f'|format(bakiye) }} {{ banka.para_birimi }}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-9">
+    <div class="card">
+      <div class="card-header py-2">Hareketler</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Tarih</th><th>Belge No</th><th>Açıklama</th>
+                <th class="text-end">Giriş</th><th class="text-end">Çıkış</th></tr>
+          </thead>
+          <tbody>
+            {% for h in hareketler %}
+            <tr>
+              <td class="small">{{ h.tarih.strftime('%d.%m.%Y') }}</td>
+              <td class="small">{{ h.belge_no or '—' }}</td>
+              <td class="small">{{ h.aciklama or '—' }}</td>
+              <td class="text-end small text-success">
+                {% if h.hareket_tipi == 'GIRIS' %}{{ '%.2f'|format(h.tutar|float) }} ₺{% else %}—{% endif %}
+              </td>
+              <td class="text-end small text-danger">
+                {% if h.hareket_tipi == 'CIKIS' %}{{ '%.2f'|format(h.tutar|float) }} ₺{% else %}—{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Hareket yok</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

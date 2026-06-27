@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}{{ personel.tam_ad }}{% endblock %}
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-0 fw-bold">{{ personel.tam_ad }}</h5>
+    <span class="text-muted small">Sicil: {{ personel.sicil_no }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('personel.izin_form', personel_id=personel.id) }}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-calendar-plus me-1"></i>İzin Talebi
+    </a>
+    <a href="{{ url_for('personel.personel_form', personel_id=personel.id) }}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-pencil me-1"></i>Düzenle
+    </a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header py-2">Personel Bilgileri</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tr><td class="text-muted small ps-3">TC Kimlik</td>
+              <td class="small pe-3">{{ personel.tc_kimlik or '—' }}</td></tr>
+          <tr><td class="text-muted small ps-3">İşe Giriş</td>
+              <td class="small pe-3">{{ personel.ise_giris.strftime('%d.%m.%Y') }}</td></tr>
+          <tr><td class="text-muted small ps-3">İşten Çıkış</td>
+              <td class="small pe-3">{{ personel.isten_cikis.strftime('%d.%m.%Y') if personel.isten_cikis else '—' }}</td></tr>
+          <tr><td class="text-muted small ps-3">Durum</td>
+              <td class="small pe-3">
+                <span class="badge {{ 'bg-success' if personel.aktif else 'bg-secondary' }}">
+                  {{ 'Aktif' if personel.aktif else 'Pasif' }}
+                </span>
+              </td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header py-2">İzin Geçmişi</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Tip</th><th>Başlangıç</th><th>Bitiş</th>
+                <th>Gün</th><th>Durum</th></tr>
+          </thead>
+          <tbody>
+            {% for izin in izinler %}
+            <tr>
+              <td class="small">{{ izin.izin_tipi }}</td>
+              <td class="small">{{ izin.baslangic.strftime('%d.%m.%Y') }}</td>
+              <td class="small">{{ izin.bitis.strftime('%d.%m.%Y') }}</td>
+              <td class="small">{{ izin.gun_sayisi }}</td>
+              <td class="small">
+                <span class="badge {{ 'bg-warning text-dark' if izin.durum == 'BEKLEMEDE' else 'bg-success' if izin.durum == 'ONAYLANDI' else 'bg-danger' }}">
+                  {{ izin.durum }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">İzin kaydı yok</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

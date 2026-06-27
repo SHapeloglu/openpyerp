@@ -1,0 +1,23 @@
+# OpenPyERP — Python bağımlılıkları
+# Güncelleme: pip install -r requirements.txt
+
+# Web framework
+Flask>=3.0,<4.0
+Flask-SQLAlchemy>=3.1,<4.0
+Flask-WTF>=1.2,<2.0
+
+# DB sürücüsü — PostgreSQL
+psycopg2-binary>=2.9
+
+# Migration
+alembic>=1.13,<2.0
+
+# Üretim WSGI sunucusu
+gunicorn>=22.0
+
+# Güvenlik
+bcrypt>=4.0
+
+# Test
+pytest>=8.0
+pytest-flask>=1.3

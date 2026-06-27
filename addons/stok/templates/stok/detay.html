@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}{{ stok.ad }}{% endblock %}
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-0 fw-bold">{{ stok.ad }}</h5>
+    <span class="text-muted small">{{ stok.kod }} · {{ stok.tip }}</span>
+  </div>
+  <a href="{{ url_for('stok.stok_form', stok_id=stok.id) }}"
+     class="btn btn-outline-primary btn-sm">
+    <i class="bi bi-pencil me-1"></i>Düzenle
+  </a>
+</div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header py-2">Stok Bilgisi</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tr><td class="text-muted small ps-3">Birim</td>
+              <td class="small pe-3">{{ stok.birim.ad if stok.birim else '—' }}</td></tr>
+          <tr><td class="text-muted small ps-3">KDV %</td>
+              <td class="small pe-3">{{ stok.kdv_orani }}</td></tr>
+          <tr><td class="text-muted small ps-3">Satış Fiyatı</td>
+              <td class="small pe-3 fw-semibold">{{ '%.4f'|format(stok.satis_fiyati|float) }} ₺</td></tr>
+          <tr><td class="text-muted small ps-3">Alış Fiyatı</td>
+              <td class="small pe-3">{{ '%.4f'|format(stok.alis_fiyati|float) }} ₺</td></tr>
+        </table>
+      </div>
+    </div>
+    {% if stok.tip == 'MALZEME' %}
+    <div class="card mt-3">
+      <div class="card-body text-center py-4">
+        <div class="text-muted small mb-1">Mevcut Stok</div>
+        <div class="fs-3 fw-bold {{ 'text-danger' if miktar and miktar < (stok.min_stok or 0) else '' }}">
+          {{ '%.4f'|format(miktar|float) if miktar is not none else '—' }}
+          <small class="fs-6 text-muted">{{ stok.birim.kod if stok.birim else '' }}</small>
+        </div>
+        {% if stok.min_stok and miktar and miktar < stok.min_stok %}
+        <div class="text-danger small mt-1">
+          <i class="bi bi-exclamation-triangle me-1"></i>Min. stok altında!
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header py-2">Son Hareketler</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Tarih</th><th>Belge No</th><th>Tip</th>
+                <th class="text-end">Miktar</th><th>Açıklama</th></tr>
+          </thead>
+          <tbody>
+            {% for h in hareketler %}
+            <tr>
+              <td class="small">{{ h.tarih.strftime('%d.%m.%Y') }}</td>
+              <td class="small">{{ h.belge_no or '—' }}</td>
+              <td class="small">
+                <span class="badge {{ 'bg-success' if h.hareket_tipi == 'GIRIS' else 'bg-danger' }}">
+                  {{ h.hareket_tipi }}
+                </span>
+              </td>
+              <td class="text-end small">{{ '%.4f'|format(h.miktar|float) }}</td>
+              <td class="small text-muted">{{ h.aciklama or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Hareket yok</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}Vade Analizi{% endblock %}
+
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="fw-bold mb-0">Vade Analizi</h5>
+  <a href="{{ url_for('rapor.rapor_ana') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Raporlar
+  </a>
+</div>
+
+<!-- Özet -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card border-danger">
+      <div class="card-body text-center py-3">
+        <div class="text-danger small mb-1 fw-semibold">
+          <i class="bi bi-exclamation-triangle me-1"></i>Vadesi Geçmiş
+        </div>
+        <div class="fs-4 fw-bold text-danger">{{ gecmis|length }} belge</div>
+        <div class="text-muted small">
+          {{ '%.2f'|format(gecmis|sum(attribute=0)|map(attribute='toplam_kdvli')|sum|float if gecmis else 0) }} ₺
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-warning">
+      <div class="card-body text-center py-3">
+        <div class="text-warning small mb-1 fw-semibold">
+          <i class="bi bi-clock me-1"></i>Bu Hafta
+        </div>
+        <div class="fs-4 fw-bold text-warning">{{ bu_hafta|length }} belge</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body text-center py-3">
+        <div class="text-muted small mb-1 fw-semibold">
+          <i class="bi bi-calendar me-1"></i>İleri Vadeli
+        </div>
+        <div class="fs-4 fw-bold">{{ gelecek|length }} belge</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Vadesi geçmiş -->
+{% if gecmis %}
+<div class="card mb-3 border-danger border-opacity-25">
+  <div class="card-header py-2 text-danger">
+    <i class="bi bi-exclamation-triangle me-1"></i>Vadesi Geçmiş
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Belge No</th><th>Cari</th><th>Vade</th>
+            <th class="text-end">Geçen Gün</th><th class="text-end">Tutar</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for belge, gun in gecmis | sort(attribute=1, reverse=True) %}
+        <tr>
+          <td class="small fw-semibold">{{ belge.belge_no }}</td>
+          <td class="small">{{ belge.cari.unvan if belge.cari else '—' }}</td>
+          <td class="small text-danger">{{ belge.vade_tarihi.strftime('%d.%m.%Y') }}</td>
+          <td class="text-end small">
+            <span class="badge bg-danger">{{ gun }} gün</span>
+          </td>
+          <td class="text-end small fw-semibold">{{ '%.2f'|format(belge.toplam_kdvli|float) }} ₺</td>
+          <td>
+            <a href="{{ url_for('belge.belge_form', baslik_id=belge.id) }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Bu hafta -->
+{% if bu_hafta %}
+<div class="card mb-3 border-warning border-opacity-25">
+  <div class="card-header py-2 text-warning">
+    <i class="bi bi-clock me-1"></i>Bu Hafta Vadeli
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Belge No</th><th>Cari</th><th>Vade</th>
+            <th class="text-end">Kalan Gün</th><th class="text-end">Tutar</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for belge, gun in bu_hafta | sort(attribute=1) %}
+        <tr>
+          <td class="small fw-semibold">{{ belge.belge_no }}</td>
+          <td class="small">{{ belge.cari.unvan if belge.cari else '—' }}</td>
+          <td class="small">{{ belge.vade_tarihi.strftime('%d.%m.%Y') }}</td>
+          <td class="text-end small">
+            <span class="badge bg-warning text-dark">{{ gun }} gün</span>
+          </td>
+          <td class="text-end small fw-semibold">{{ '%.2f'|format(belge.toplam_kdvli|float) }} ₺</td>
+          <td>
+            <a href="{{ url_for('belge.belge_form', baslik_id=belge.id) }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- İleri vadeli -->
+{% if gelecek %}
+<div class="card">
+  <div class="card-header py-2 text-muted">
+    <i class="bi bi-calendar me-1"></i>İleri Vadeli
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>Belge No</th><th>Cari</th><th>Vade</th>
+            <th class="text-end">Kalan Gün</th><th class="text-end">Tutar</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for belge, gun in gelecek | sort(attribute=1) %}
+        <tr>
+          <td class="small fw-semibold">{{ belge.belge_no }}</td>
+          <td class="small">{{ belge.cari.unvan if belge.cari else '—' }}</td>
+          <td class="small">{{ belge.vade_tarihi.strftime('%d.%m.%Y') }}</td>
+          <td class="text-end small text-muted">{{ gun }} gün</td>
+          <td class="text-end small fw-semibold">{{ '%.2f'|format(belge.toplam_kdvli|float) }} ₺</td>
+          <td>
+            <a href="{{ url_for('belge.belge_form', baslik_id=belge.id) }}"
+               class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if not gecmis and not bu_hafta and not gelecek %}
+<div class="card">
+  <div class="card-body text-center text-muted py-5">
+    <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>
+    Bekleyen vadeli fatura yok
+  </div>
+</div>
+{% endif %}
+{% endblock %}

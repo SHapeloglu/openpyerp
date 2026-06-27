@@ -1,0 +1,57 @@
+{# _satir_satiri.html — Belge satır tablosunun tek satırı
+   HTMX ile dinamik ekleme ve ilk yükleme için kullanılır.
+   Değişkenler: satir (BelgeSatir objesi veya None), sira (int), form_view, stoklar #}
+<tr class="satir-row">
+  {% for kolon in form_view.satir_alanlari %}
+  <td>
+    {%- set deger = (satir | attr(kolon.ad)) if satir and (satir | attr(kolon.ad)) is not none else kolon.varsayilan or '' -%}
+
+    {% if kolon.tip == 'select' %}
+      <select name="{{ kolon.ad }}[]"
+              class="form-select form-select-sm s-{{ kolon.ad }}"
+              style="min-width:{{ kolon.genislik }}"
+              {{ 'required' if kolon.zorunlu }}>
+        <option value="">—</option>
+        {% set secenekler = kolon.secenekler() if kolon.secenekler is callable else kolon.secenekler %}
+        {% for s_deger, s_etiket in (secenekler or []) %}
+        <option value="{{ s_deger }}" {{ 'selected' if deger|string == s_deger|string }}>
+          {{ s_etiket }}
+        </option>
+        {% endfor %}
+      </select>
+
+    {% elif kolon.tip == 'readonly' %}
+      <span class="s-{{ kolon.ad }}">{{ deger or '—' }}</span>
+
+    {% elif kolon.tip in ('number', 'money') %}
+      <input type="number" name="{{ kolon.ad }}[]"
+             class="form-control form-control-sm text-end s-{{ kolon.ad }}"
+             style="width:{{ kolon.genislik }}"
+             value="{{ '%.4f'|format(deger|float) if deger else '0' }}"
+             step="{{ kolon.adim }}" min="0"
+             {{ 'required' if kolon.zorunlu }}>
+
+    {% else %}
+      <input type="text" name="{{ kolon.ad }}[]"
+             class="form-control form-control-sm s-{{ kolon.ad }}"
+             style="width:{{ kolon.genislik }}"
+             value="{{ deger }}"
+             {{ 'required' if kolon.zorunlu }}>
+    {% endif %}
+  </td>
+  {% endfor %}
+
+  {# Satır toplamı #}
+  <td class="tutar-col s-toplam text-end small pe-2">
+    {% if satir %}
+    {{ '%.2f'|format(satir.kdvli_tutar|float) }} ₺
+    {% else %}0.00 ₺{% endif %}
+  </td>
+
+  {# Sil butonu #}
+  <td class="text-center">
+    <button type="button" class="btn btn-link text-danger btn-sm satir-sil-btn p-0">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </td>
+</tr>

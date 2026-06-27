@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="tr" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block baslik %}OpenPyERP{% endblock %}</title>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    :root {
+      --sidebar-w: 240px;
+      --topbar-h: 52px;
+      --accent: #0d6efd;
+    }
+    body { background: #f5f6fa; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: var(--sidebar-w); background: #1e2235;
+      overflow-y: auto; z-index: 100;
+      transition: width .2s;
+    }
+    #sidebar .brand {
+      padding: 14px 20px; font-size: 1.1rem; font-weight: 700;
+      color: #fff; border-bottom: 1px solid #2d3350;
+      letter-spacing: .5px;
+    }
+    #sidebar .nav-section {
+      padding: 16px 12px 4px; font-size: .68rem; font-weight: 600;
+      color: #6c7293; text-transform: uppercase; letter-spacing: 1px;
+    }
+    #sidebar .nav-link {
+      color: #b0b8d0; padding: 8px 16px; border-radius: 6px;
+      margin: 1px 8px; font-size: .875rem; display: flex; align-items: center; gap: 10px;
+    }
+    #sidebar .nav-link:hover, #sidebar .nav-link.active {
+      background: #2d3350; color: #fff;
+    }
+    #sidebar .nav-link i { font-size: 1rem; width: 18px; text-align: center; }
+
+    /* ── Topbar ── */
+    #topbar {
+      position: fixed; top: 0; left: var(--sidebar-w); right: 0;
+      height: var(--topbar-h); background: #fff;
+      border-bottom: 1px solid #e2e6ea;
+      display: flex; align-items: center; padding: 0 24px;
+      justify-content: space-between; z-index: 99;
+    }
+    #topbar .page-title { font-weight: 600; font-size: 1rem; color: #1e2235; }
+
+    /* ── İçerik alanı ── */
+    #content {
+      margin-left: var(--sidebar-w);
+      padding-top: calc(var(--topbar-h) + 24px);
+      padding-right: 24px; padding-left: 24px; padding-bottom: 40px;
+      min-height: 100vh;
+    }
+
+    /* ── Kart ── */
+    .card { border: none; box-shadow: 0 1px 4px rgba(0,0,0,.07); border-radius: 10px; }
+    .card-header { background: #fff; border-bottom: 1px solid #f0f0f0; font-weight: 600; }
+
+    /* ── Tablo ── */
+    .table th { font-size: .78rem; font-weight: 600; color: #6c7293;
+                text-transform: uppercase; letter-spacing: .5px; border-top: none; }
+    .table td { vertical-align: middle; font-size: .875rem; }
+    .table-hover tbody tr:hover { background: #f8f9ff; }
+
+    /* ── Badge durum ── */
+    .badge-TASLAK    { background: #e9ecef; color: #495057; }
+    .badge-ACIK      { background: #cff4fc; color: #055160; }
+    .badge-ONAYLANDI { background: #d1e7dd; color: #0a3622; }
+    .badge-IPTAL     { background: #f8d7da; color: #58151c; }
+
+    /* ── HTMX yükleniyor göstergesi ── */
+    #yukleniyor {
+      display: none; position: fixed; top: 0; left: 0; right: 0;
+      height: 3px; background: var(--accent);
+      animation: progress .8s ease infinite;
+    }
+    @keyframes progress {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .htmx-request #yukleniyor { display: block; }
+
+    /* ── Belge form satırı ── */
+    .satir-row td { padding: 4px 6px !important; }
+    .satir-row input, .satir-row select {
+      font-size: .82rem; padding: 4px 8px; height: 32px;
+    }
+  </style>
+  {% block ekstra_css %}{% endblock %}
+</head>
+
+<body>
+<div id="yukleniyor"></div>
+
+<!-- ── Sidebar ── -->
+<nav id="sidebar">
+  <div class="brand">
+    <i class="bi bi-grid-3x3-gap-fill me-2" style="color:#0d6efd"></i>OpenPyERP
+  </div>
+
+  <div class="nav-section">Ana Menü</div>
+  <a class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}"
+     href="{{ url_for('dashboard.index') }}">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+
+  <div class="nav-section">Satış</div>
+  <a class="nav-link {% if request.endpoint == 'belge.belge_liste' and request.view_args.get('belge_tip') == 'TALEP' %}active{% endif %}"
+     href="{{ url_for('belge.belge_liste', belge_tip='TALEP', cari_tip='SATIS') }}">
+    <i class="bi bi-file-earmark-text"></i> Talepler
+  </a>
+  <a class="nav-link {% if request.endpoint == 'belge.belge_liste' and request.view_args.get('belge_tip') == 'SIPARIS' %}active{% endif %}"
+     href="{{ url_for('belge.belge_liste', belge_tip='SIPARIS', cari_tip='SATIS') }}">
+    <i class="bi bi-cart3"></i> Siparişler
+  </a>
+  <a class="nav-link {% if request.endpoint == 'belge.belge_liste' and request.view_args.get('belge_tip') == 'IRSALIYE' %}active{% endif %}"
+     href="{{ url_for('belge.belge_liste', belge_tip='IRSALIYE', cari_tip='SATIS') }}">
+    <i class="bi bi-truck"></i> İrsaliyeler
+  </a>
+  <a class="nav-link {% if request.endpoint == 'belge.belge_liste' and request.view_args.get('belge_tip') == 'FATURA' and request.view_args.get('cari_tip') == 'SATIS' %}active{% endif %}"
+     href="{{ url_for('belge.belge_liste', belge_tip='FATURA', cari_tip='SATIS') }}">
+    <i class="bi bi-receipt"></i> Satış Faturaları
+  </a>
+
+  <div class="nav-section">Alış</div>
+  <a class="nav-link {% if request.endpoint == 'belge.belge_liste' and request.view_args.get('belge_tip') == 'FATURA' and request.view_args.get('cari_tip') == 'ALIS' %}active{% endif %}"
+     href="{{ url_for('belge.belge_liste', belge_tip='FATURA', cari_tip='ALIS') }}">
+    <i class="bi bi-receipt"></i> Alış Faturaları
+  </a>
+
+  <div class="nav-section">Stok & Cari</div>
+  <a class="nav-link {% if request.endpoint and request.endpoint.startswith('stok.') %}active{% endif %}"
+     href="{{ url_for('stok.stok_liste') }}">
+    <i class="bi bi-box-seam"></i> Stok Kartları
+  </a>
+  <a class="nav-link {% if request.endpoint and request.endpoint.startswith('cari.') %}active{% endif %}"
+     href="{{ url_for('cari.cari_liste') }}">
+    <i class="bi bi-people"></i> Cari Hesaplar
+  </a>
+
+  <div class="nav-section">Finans</div>
+  <a class="nav-link {% if request.endpoint == 'finans.kasa_liste' or request.endpoint == 'finans.kasa_detay' %}active{% endif %}"
+     href="{{ url_for('finans.kasa_liste') }}">
+    <i class="bi bi-safe"></i> Kasa
+  </a>
+  <a class="nav-link {% if request.endpoint == 'finans.banka_liste' or request.endpoint == 'finans.banka_detay' %}active{% endif %}"
+     href="{{ url_for('finans.banka_liste') }}">
+    <i class="bi bi-bank"></i> Banka
+  </a>
+
+  <div class="nav-section">Üretim & Personel</div>
+  <a class="nav-link {% if request.endpoint and request.endpoint.startswith('uretim.') %}active{% endif %}"
+     href="{{ url_for('uretim.uretim_liste') }}">
+    <i class="bi bi-gear"></i> Üretim
+  </a>
+  <a class="nav-link {% if request.endpoint and request.endpoint.startswith('personel.') %}active{% endif %}"
+     href="{{ url_for('personel.personel_liste') }}">
+    <i class="bi bi-person-badge"></i> Personel
+  </a>
+
+  <div class="nav-section">Raporlar</div>
+  <a class="nav-link {% if request.endpoint == 'rapor.gelir_gider' %}active{% endif %}"
+     href="{{ url_for('rapor.gelir_gider') }}">
+    <i class="bi bi-bar-chart-line"></i> Gelir / Gider
+  </a>
+  <a class="nav-link {% if request.endpoint == 'rapor.cari_bakiye' %}active{% endif %}"
+     href="{{ url_for('rapor.cari_bakiye') }}">
+    <i class="bi bi-people"></i> Cari Bakiye
+  </a>
+  <a class="nav-link {% if request.endpoint == 'rapor.vade_analizi' %}active{% endif %}"
+     href="{{ url_for('rapor.vade_analizi') }}">
+    <i class="bi bi-calendar-event"></i> Vade Analizi
+  </a>
+  <a class="nav-link {% if request.endpoint == 'rapor.stok_durumu' %}active{% endif %}"
+     href="{{ url_for('rapor.stok_durumu') }}">
+    <i class="bi bi-clipboard-data"></i> Stok Durumu
+  </a>
+
+  <div class="nav-section">Sistem</div>
+  <a class="nav-link" href="{{ url_for('ayarlar.cikis') }}">
+    <i class="bi bi-box-arrow-right"></i> Çıkış
+  </a>
+</nav>
+
+<!-- ── Topbar ── -->
+<div id="topbar">
+  <span class="page-title">{% block sayfa_baslik %}{% endblock %}</span>
+  <div class="d-flex align-items-center gap-3">
+    {% if session.get('kullanici_ad') %}
+    <span class="text-muted small">
+      <i class="bi bi-person-circle me-1"></i>{{ session.kullanici_ad }}
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── İçerik ── -->
+<div id="content">
+
+  <!-- Flash mesajları -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-3">
+        {% for kategori, mesaj in messages %}
+        <div class="alert alert-{{ 'success' if kategori == 'success' else 'danger' if kategori == 'danger' else 'warning' }} alert-dismissible fade show" role="alert">
+          <i class="bi bi-{{ 'check-circle' if kategori == 'success' else 'exclamation-triangle' }} me-2"></i>
+          {{ mesaj }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block icerik %}{% endblock %}
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<!-- HTMX -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.12/htmx.min.js"></script>
+
+<script>
+  // HTMX: form submit sonrası flash mesajlarını göster
+  document.body.addEventListener('htmx:afterSwap', function(e) {
+    var alerts = e.detail.target.querySelectorAll('.alert');
+    alerts.forEach(function(a) { new bootstrap.Alert(a); });
+  });
+</script>
+{% block ekstra_js %}{% endblock %}
+</body>
+</html>

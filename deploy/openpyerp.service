@@ -1,0 +1,43 @@
+# /etc/systemd/system/openpyerp.service
+#
+# Kurulum:
+#   sudo cp deploy/openpyerp.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable openpyerp
+#   sudo systemctl start openpyerp
+#   sudo systemctl status openpyerp
+
+[Unit]
+Description=OpenPyERP — Açık Kaynak ERP
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/openpyerp
+
+# Ortam değişkenleri — hassas bilgiler burada
+EnvironmentFile=/etc/openpyerp.env
+
+# Gunicorn ile çalıştır — 4 worker, port 5000
+ExecStart=/var/www/openpyerp/venv/bin/gunicorn \
+    "app:create_app()" \
+    --workers 4 \
+    --bind 127.0.0.1:5000 \
+    --timeout 120 \
+    --access-logfile /var/log/openpyerp/access.log \
+    --error-logfile  /var/log/openpyerp/error.log \
+    --log-level info
+
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+# Güvenlik kısıtlamaları
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

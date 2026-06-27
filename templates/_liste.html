@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block sayfa_baslik %}{{ liste_view.baslik }}{% endblock %}
+
+{% block icerik %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h5 class="mb-0 fw-bold">{{ liste_view.baslik }}</h5>
+    <span class="text-muted small">{{ satirlar|length }} kayıt</span>
+  </div>
+  <div class="d-flex gap-2">
+    {% if liste_view.yeni_url %}
+    <a href="{{ liste_view.yeni_url }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>{{ liste_view.yeni_etiket }}
+    </a>
+    {% endif %}
+    {% block liste_ekstra_butonlar %}{% endblock %}
+  </div>
+</div>
+
+<!-- Arama + filtre -->
+{% if liste_view.arama_alanlari or liste_view.filtreler %}
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="GET" class="row g-2 align-items-center">
+      {% if liste_view.arama_alanlari %}
+      <div class="col-auto flex-grow-1">
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" class="form-control" placeholder="Ara..."
+                 value="{{ request.args.get('q', '') }}"
+                 hx-get="{{ request.path }}" hx-target="#tablo-govde"
+                 hx-trigger="keyup changed delay:400ms" hx-include="[name='q']">
+        </div>
+      </div>
+      {% endif %}
+      {% for filtre in liste_view.filtreler %}
+      <div class="col-auto">
+        <select name="{{ filtre.ad }}" class="form-select form-select-sm"
+                hx-get="{{ request.path }}" hx-target="#tablo-govde"
+                hx-trigger="change" hx-include="closest form">
+          <option value="">{{ filtre.etiket }} — Tümü</option>
+          {% for deger, etiket in filtre.secenekler %}
+          <option value="{{ deger }}" {{ 'selected' if request.args.get(filtre.ad) == deger }}>
+            {{ etiket }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endfor %}
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Tablo -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          {% for kolon in liste_view.kolonlar %}
+          <th style="width:{{ kolon.genislik }}">{{ kolon.etiket }}</th>
+          {% endfor %}
+          <th style="width:80px"></th>
+        </tr>
+      </thead>
+      <tbody id="tablo-govde">
+        {% include '_liste_satirlar.html' %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -8,3 +8,9 @@ instance/
 .env
 *.env
 .DS_Store
+# Ortam değişkenleri / hassas dosyalar
+whatsapp_bi/env
+*.env
+.env
+__pycache__/
+*.pyc

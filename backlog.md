@@ -8,7 +8,18 @@ Bu dosya henüz önceliklendirilmemiş, "bir gün yapılabilir" fikirler ve öze
 
 ## Fikirler
 
-_(henüz boş — yeni bir fikir geldiğinde aşağıdaki şablonla ekle)_
+### CariMatik'ten henüz taşınmamış alanlar
+
+- **Kategori:** yeni özellik · **Addon:** yeni / `finans` / `personel`
+- CariMatik (`/root/projects/CariMatik/app.py`, 63 model) ile karşılaştırıldığında OpenPyERP'te **model karşılığı olmayan** alanlar: çek/senet portföyü ve taksit planı, döviz türleri, cari hesap fişi, hesap grubu, il/ilçe/mahalle adresleri, proje & masraf merkezi, hedef, üretim reçetesi, varyant ve fiyat listeleri, belge tasarımı, kullanıcı tanımlı SQL raporları, kullanıcı-şirket/depo/belge yetki tabloları, personel evrak/hakediş; ayrıca muhasebeci erişimi ve POS ekranı. `finans` addon'unda şu an yalnız Kasa/Banka ve hareketleri, `personel`'de Personel/İzin/Puantaj var. Kesin liste için iki model kümesini karşılaştır.
+- Her biri ayrı addon (manifest + `KAYITLI_ADDONLAR` + Alembic migration) olarak taşınmalı.
+
+### Diğer fikirler
+
+- e-Fatura / e-Arşiv: Sovos entegrasyon deneyimini (`l10n_tr_sovos_efatura`) bir `efatura` addon'una uyarlamak.
+- `eticaret` addon'unu (şu an `extends.py` + migration) README'deki pazaryeri/ödeme hedefleriyle netleştirmek.
+- `whatsapp_bi` modülünü (doğal dil → rapor) addon yapısına almak.
+- Test kapsamı: şu an yalnız `belge` (hesaplama, servis) ve workflow testleri var — `cari`, `stok`, `finans` servisleri için unit testler.
 
 ## Ekleme Şablonu
 
